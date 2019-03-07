@@ -30,3 +30,18 @@ And then use **build-in client** [HttpProxyClient.cs](/src/FreeProxySharp/HttpPr
 var client = _test.Services.GetRequiredService<HttpProxyClient>();
 await client.GetStringAsync("https://www.amazon.com/", retry: 2);
 ```
+
+Configuration example [TestOptions.cs](/src/FreeProxySharp.Test/TestOptions.cs):
+
+```c#
+public class TestOptions : IHttpProxyConfiguration
+{
+	public int Retry => 2;
+        public int RetryFirstDelay => 1;
+        public bool GzipEnabled => true;
+        public string UserAgent => HttpExtensions.DEFAULT_AGENT;
+	
+        public bool ProxyEnabled => true;
+        public IHttpProxyServer[] Proxies { get; set; }
+}
+```
