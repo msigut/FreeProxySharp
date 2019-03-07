@@ -12,6 +12,7 @@
 /storage
 /src/**/appsettings.workspace.json
 /test/**/appsettings.workspace.json
+/tools/**/copy*.ps1
 
 /src/**/ClientApp/dist
 ## Ignore Visual Studio temporary files, build results, and

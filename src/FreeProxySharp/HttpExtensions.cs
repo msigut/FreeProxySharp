@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,7 +42,7 @@ namespace FreeProxySharp
         /// </summary>
 		public static void AddHttpClient(this IServiceCollection services, IHttpProxyConfiguration configuration, string name, WebProxy proxy = null)
         {
-            if (configuration == null)
+			if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
 
             AddHttpClient(services, name, configuration.Retry, configuration.RetryFirstDelay, configuration.GzipEnabled, configuration.UserAgent, proxy);
@@ -56,6 +55,10 @@ namespace FreeProxySharp
             string name, int retry = DEFAULT_RETRY, int retryFirstDelay = DEFAULT_RETRY_FIRST_DELAY,
             bool gzipEnabled = DEFAULT_GZIP, string userAgent = DEFAULT_AGENT, WebProxy proxy = null)
         {
+			if (services == null)
+				throw new ArgumentNullException(nameof(services));
+			if (string.IsNullOrEmpty(name))
+				throw new ArgumentException(nameof(name));
 
 			services.AddHttpClient(name,
 				// user-agent

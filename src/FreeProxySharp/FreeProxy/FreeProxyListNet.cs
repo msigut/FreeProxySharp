@@ -16,6 +16,9 @@ namespace FreeProxySharp
 	/// </summary>
 	public static class FreeProxyListNet
     {
+		/// <summary>
+		/// base URL
+		/// </summary>
 		public const string URL = "https://free-proxy-list.net/";
 
 		/// <summary>
@@ -65,6 +68,9 @@ namespace FreeProxySharp
 		public static async Task<IEnumerable<FreeProxyServer>> Check(IEnumerable<FreeProxyServer> list,
 			bool nonTransparentOnly = true, string[] codeFilter = null, int required = 10, int maxMiliseconds = 1000, bool? https = true)
         {
+			if (list == null)
+				throw new ArgumentNullException(nameof(list));
+
 			var result = new List<FreeProxyServer>();
 
 			// for non-trasparent forget this kind in input data
@@ -166,6 +172,12 @@ namespace FreeProxySharp
 		/// </summary>
 		public static void AssignToConfig(this IHttpProxyConfiguration configuration, string[] codeFilter = null, int required = 10)
 		{
+			if (configuration == null)
+				throw new ArgumentNullException(nameof(configuration));
+
+			if (!configuration.ProxyEnabled)
+				return;
+
 			var proxies = Parse().GetAwaiter().GetResult();
 			var checkedProxies = Check(proxies, codeFilter: codeFilter, required: required).GetAwaiter().GetResult();
 
