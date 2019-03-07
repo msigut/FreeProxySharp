@@ -45,7 +45,7 @@ namespace FreeProxySharp.Test
 			services.AddSingleton<HttpProxyClient>();
 
 			// proxy
-			Options.AssignToConfig(codeFilter: new[] { "SE", "DE", "ES", "PL" }, requied: 2);
+			Options.AssignToConfig(codeFilter: new[] { "SE", "DE", "ES", "PL" }, required: 2);
 			services.AddHttpProxyClient(Options);
 
 			Services = services.BuildServiceProvider();

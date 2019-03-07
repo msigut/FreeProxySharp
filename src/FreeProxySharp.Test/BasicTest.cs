@@ -48,7 +48,7 @@ namespace FreeProxySharp.Test
 		[Fact]
 		public async Task TestFreeProxyListNet()
 		{
-			// parse proxies from list
+			// get proxy list
 			var proxies = await FreeProxyListNet.Parse();
 			Assert.NotEmpty(proxies);
 			Assert.Contains(proxies, x => !string.IsNullOrEmpty(x.Ip));
@@ -59,17 +59,17 @@ namespace FreeProxySharp.Test
 			Assert.Contains(proxies, x => x.IsHttps);
 
 			// check all proxies
-			var checkedProxies = await FreeProxyListNet.Check(proxies, requied: 1, maxMiliseconds: 1200);
+			var checkedProxies = await FreeProxyListNet.Check(proxies, codeFilter: new[] { "DE", "PL" }, required: 1, maxMiliseconds: 1200);
 			Assert.NotEmpty(checkedProxies);
 			Assert.All(checkedProxies, x => Assert.True(x.ElapsedMiliseconds > 0));
 		}
 
 		[Fact]
-		public void TestConfigAssign()
+		public void TestFreeProxyConfigAssign()
 		{
 			// all together
-			var proxies = _test.Options.AssignToConfig(codeFilter: new[] { "SE", "DE", "ES", "GB", "RU" }, requied: 2);
-			Assert.NotEmpty(proxies);
+			_test.Options.AssignToConfig(codeFilter: new[] { "SE", "DE", "ES", "GB", "RU" }, required: 2);
+			Assert.NotEmpty(_test.Options.Proxies);
 		}
 	}
 }

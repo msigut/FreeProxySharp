@@ -62,7 +62,8 @@ namespace FreeProxySharp
 		/// <summary>
 		/// check proxy list
 		/// </summary>
-		public static async Task<IEnumerable<FreeProxyServer>> Check(IEnumerable<FreeProxyServer> list, bool nonTransparentOnly = true, int requied = 10, int maxMiliseconds = 1000, bool? https = true)
+		public static async Task<IEnumerable<FreeProxyServer>> Check(IEnumerable<FreeProxyServer> list,
+			bool nonTransparentOnly = true, string[] codeFilter = null, int required = 10, int maxMiliseconds = 1000, bool? https = true)
         {
 			var result = new List<FreeProxyServer>();
 
@@ -76,6 +77,14 @@ namespace FreeProxySharp
 			{
 				list = list.Where(x => x.IsHttps == https);
 			}
+			// filter by Country codes; when defined
+			if (codeFilter != null && codeFilter.Length > 0)
+			{
+				var _filter = codeFilter.Select(x => x.ToUpperInvariant()).ToArray();
+				list = list.Where(x => _filter.Contains(x.Code.ToUpperInvariant()));
+			}
+
+			Log.Debug($"Check: {list.Count()} proxies, {required} required.");
 
 			var num = 0;
 			foreach(var p in list)
@@ -145,7 +154,7 @@ namespace FreeProxySharp
 				Log.Debug($"{label} [OK in {p.ElapsedMiliseconds}ms]");
 
 				// check if already has count of requied
-				if (requied > 0 && result.Count >= requied)
+				if (required > 0 && result.Count >= required)
 					break;
 			}
 
@@ -155,23 +164,12 @@ namespace FreeProxySharp
 		/// <summary>
 		/// parse & check & assign to configuratuin proxies
 		/// </summary>
-		public static IHttpProxyServer[] AssignToConfig(this IHttpProxyConfiguration configuration, string[] codeFilter = null, int requied = 10)
+		public static void AssignToConfig(this IHttpProxyConfiguration configuration, string[] codeFilter = null, int required = 10)
 		{
 			var proxies = Parse().GetAwaiter().GetResult();
-
-			// filter by Country codes; when defined
-			if (codeFilter != null && codeFilter.Length > 0)
-			{
-				var _filter = codeFilter.Select(x => x.ToUpperInvariant()).ToArray();
-				proxies = proxies.Where(x => _filter.Contains(x.Code.ToUpperInvariant()));
-
-				Log.Debug($"Code filter ({string.Join(", ", _filter)}): {proxies.Count()} proxies.");
-			}
-
-			var checkedProxies = Check(proxies, requied: requied).GetAwaiter().GetResult();
+			var checkedProxies = Check(proxies, codeFilter: codeFilter, required: required).GetAwaiter().GetResult();
 
 			configuration.Proxies = checkedProxies.ToArray();
-			return configuration.Proxies;
 		}
 	}
 }
