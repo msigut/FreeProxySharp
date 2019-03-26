@@ -31,7 +31,7 @@ namespace FreeProxySharp.Test
 			var client = _test.Services.GetRequiredService<HttpProxyClient>();
 
 			// 404 Not found page
-			Assert.Null(await client.GetStringAsync("https://www.algorim.com/dedadsadsa", retry: 2));
+			Assert.Null(await client.GetStringAsync("https://www.seznam.cz/sadaasada", retry: 2));
 		}
 
 		[Fact]
@@ -39,9 +39,9 @@ namespace FreeProxySharp.Test
 		{
 			var client = _test.Services.GetRequiredService<HttpProxyClient>();
 
-			for (var x = 0; x < 100; x++)
+			for (var x = 0; x < 10; x++)
 			{
-				Assert.NotEmpty(await client.GetStringAsync("https://www.cardkingdom.com/mtg/ravnica-allegiance/singles", retry: 5));
+				Assert.NotEmpty(await client.GetStringAsync("https://www.google.com/", retry: 5));
 			}
 		}
 
@@ -59,7 +59,7 @@ namespace FreeProxySharp.Test
 			Assert.Contains(proxies, x => x.IsHttps);
 
 			// check all proxies
-			var checkedProxies = await FreeProxyListNet.Check(proxies, codeFilter: new[] { "DE", "PL" }, required: 1, maxMiliseconds: 1200);
+			var checkedProxies = await FreeProxyListNet.Check(proxies, codeFilter: new[] { "SE", "DE", "ES", "PL", "FR", "NL", "CZ", "US", "RU" }, required: 1, maxMiliseconds: 1200);
 			Assert.NotEmpty(checkedProxies);
 			Assert.All(checkedProxies, x => Assert.True(x.ElapsedMiliseconds > 0));
 		}

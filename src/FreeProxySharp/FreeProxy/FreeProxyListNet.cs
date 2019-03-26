@@ -58,6 +58,11 @@ namespace FreeProxySharp
 						IsHttps = p.QuerySelector("td:nth-child(7)").InnerHtml != "no",
 					});
 
+				foreach (var row in rows)
+				{
+					Log.Verbose($"{row.Ip}:{row.Port} ({row.Code} - {row.Country}) {row.Type}");
+				}
+
 				return rows.ToArray();
 			}
 		}
@@ -77,17 +82,20 @@ namespace FreeProxySharp
 			if (nonTransparentOnly)
 			{
 				list = list.Where(x => x.Type != FreeProxyTypes.Transparent);
+				Log.Debug($"Filter: [nonTransparentOnly] {list.Count()} proxies.");
 			}
 			// need support HTTPS?
 			if (https != null)
 			{
 				list = list.Where(x => x.IsHttps == https);
+				Log.Debug($"Filter: [https] {list.Count()} proxies.");
 			}
 			// filter by Country codes; when defined
 			if (codeFilter != null && codeFilter.Length > 0)
 			{
 				var _filter = codeFilter.Select(x => x.ToUpperInvariant()).ToArray();
 				list = list.Where(x => _filter.Contains(x.Code.ToUpperInvariant()));
+				Log.Debug($"Filter: [codeFilter] {list.Count()} proxies.");
 			}
 
 			Log.Debug($"Check: {list.Count()} proxies, {required} required.");
@@ -133,6 +141,11 @@ namespace FreeProxySharp
 					Log.Debug($"{label} [exception]");
 					continue;
 				}
+				catch (TaskCanceledException)
+				{
+					Log.Debug($"{label} [cancelled]");
+					continue;
+				}
 
 				// check if proxy is not transparent (visible IP is the same as proxy IP)
 				if (nonTransparentOnly)
@@ -170,7 +183,9 @@ namespace FreeProxySharp
 		/// <summary>
 		/// parse & check & assign to configuratuin proxies
 		/// </summary>
-		public static void AssignToConfig(this IHttpProxyConfiguration configuration, string[] codeFilter = null, int required = 10)
+		public static void AssignToConfig(this IHttpProxyConfiguration configuration,
+			bool nonTransparentOnly = true, string[] codeFilter = null, int required = 10, int maxMiliseconds = 1000, bool? https = true,
+			bool throwWhenLessThanRequired = false)
 		{
 			if (configuration == null)
 				throw new ArgumentNullException(nameof(configuration));
@@ -179,7 +194,10 @@ namespace FreeProxySharp
 				return;
 
 			var proxies = Parse().GetAwaiter().GetResult();
-			var checkedProxies = Check(proxies, codeFilter: codeFilter, required: required).GetAwaiter().GetResult();
+			var checkedProxies = Check(proxies, nonTransparentOnly, codeFilter, required, maxMiliseconds, https).GetAwaiter().GetResult();
+
+			if (checkedProxies.Count() < required && throwWhenLessThanRequired)
+				throw new InvalidOperationException($"Found: {checkedProxies.Count()}, required: {required} proxies");
 
 			configuration.Proxies = checkedProxies.ToArray();
 		}

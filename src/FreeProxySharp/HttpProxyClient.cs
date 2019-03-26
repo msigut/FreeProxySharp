@@ -25,9 +25,9 @@ namespace FreeProxySharp
 
 		public HttpProxyClient(ILogger logger, IHttpClientFactory http, IHttpProxyConfiguration configuration)
 		{
-			_logger = logger;
-			_http = http;
-            _configuration = configuration;
+			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
+			_http = http ?? throw new ArgumentNullException(nameof(http));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 		}
 
 		#endregion
