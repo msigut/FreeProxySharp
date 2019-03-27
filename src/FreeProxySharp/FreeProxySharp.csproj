@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -7,15 +7,16 @@
     <Description>HttpClient (IHttpClientFactory) + Proxy implementation with Dependency injection support and https://free-proxy-list.net/ as proxy-list source for .NET Standard 2.0 (netstandard2.0).</Description>
     <Copyright>Martin Šigut, Algorim</Copyright>
     <PackageProjectUrl>https://github.com/msigut/FreeProxySharp</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/msigut/FreeProxySharp/master/LICENSE.md</PackageLicenseUrl>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryUrl>https://github.com/msigut/FreeProxySharp</RepositoryUrl>
     <PackageTags>HttpClient Free Proxy List Dependency Injection netstandard2.0</PackageTags>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageIconUrl>https://raw.githubusercontent.com/msigut/FreeProxySharp/master/proxy-icon.png</PackageIconUrl>
-    <Version>1.0.2</Version>
+    <Version>1.0.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\..\LICENSE.md" Pack="true" PackagePath="" />
     <PackageReference Include="Fizzler.Systems.HtmlAgilityPack" Version="1.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="2.2.0" />
