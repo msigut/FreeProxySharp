@@ -48,17 +48,23 @@ namespace FreeProxySharp
             AddHttpClient(services, name, configuration.Retry, configuration.RetryFirstDelay, configuration.GzipEnabled, configuration.UserAgent, proxy);
         }
 
-        /// <summary>
-        /// HttpClient DI settings by name
-        /// </summary>
-        public static void AddHttpClient(this IServiceCollection services,
-            string name, int retry = DEFAULT_RETRY, int retryFirstDelay = DEFAULT_RETRY_FIRST_DELAY,
-            bool gzipEnabled = DEFAULT_GZIP, string userAgent = DEFAULT_AGENT, WebProxy proxy = null)
+		/// <summary>
+		/// HttpClient DI settings by name
+		/// </summary>
+		public static void AddHttpClient(this IServiceCollection services, string name,
+			int retry = DEFAULT_RETRY, int retryFirstDelay = DEFAULT_RETRY_FIRST_DELAY, bool gzipEnabled = DEFAULT_GZIP,
+			string userAgent = DEFAULT_AGENT, WebProxy proxy = null, Func<HttpResponseMessage, bool> whenRetry = null)
         {
 			if (services == null)
 				throw new ArgumentNullException(nameof(services));
 			if (string.IsNullOrEmpty(name))
 				throw new ArgumentException(nameof(name));
+
+			// check Result status code; OK -> continue
+			if (whenRetry == null)
+			{
+				whenRetry = res => res?.StatusCode != HttpStatusCode.OK;
+			}
 
 			services.AddHttpClient(name,
 				// user-agent
@@ -76,8 +82,7 @@ namespace FreeProxySharp
 					UseProxy = (proxy != null)
 				})
 				.AddTransientHttpErrorPolicy(builder => builder
-					// check Result status code; OK -> continue
-					.OrResult(res => res?.StatusCode != HttpStatusCode.OK)
+					.OrResult(whenRetry)
 					// exponential waiting; number of retry by parameters
 					.WaitAndRetryAsync(retry,
 						retryAttempt => GetDelay(retryFirstDelay, retryAttempt),
