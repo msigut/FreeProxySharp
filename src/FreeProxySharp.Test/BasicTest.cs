@@ -1,4 +1,7 @@
+using System.Net.Http;
 using System.Threading.Tasks;
+using Fizzler.Systems.HtmlAgilityPack;
+using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -18,31 +21,35 @@ namespace FreeProxySharp.Test
 		#endregion
 
 		[Fact]
-		public async Task TestHttpClient()
+		public async Task TestHttpClientCommon()
 		{
-			var client = _test.Services.GetRequiredService<HttpProxyClient>();
+			var factory = _test.Services.GetRequiredService<IHttpClientFactory>();
+			var client = factory.CreateClient("COMMON");
 
-			Assert.NotEmpty(await client.GetStringAsync("https://www.amazon.com/", retry: 2));
+			Assert.NotEmpty(await client.GetStringSafeAsync("https://httpstat.us"));
 		}
 
 		[Fact]
 		public async Task TestHttpClientNotFound()
 		{
-			var client = _test.Services.GetRequiredService<HttpProxyClient>();
+			var factory = _test.Services.GetRequiredService<IHttpClientFactory>();
+			var client = factory.CreateClient("404TEST");
 
-			// 404 Not found page
-			Assert.Null(await client.GetStringAsync("https://www.seznam.cz/sadaasada", retry: 2));
+			await Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetStringSafeAsync("https://httpstat.us/404"));
 		}
 
 		[Fact]
-		public async Task TestHttpClientRetry()
+		public async Task TestHttpClientProxy()
 		{
-			var client = _test.Services.GetRequiredService<HttpProxyClient>();
+			var factory = _test.Services.GetRequiredService<HttpProxyFactory>();
+			var client = factory.GetClientProxy("PROXY");
 
-			for (var x = 0; x < 10; x++)
-			{
-				Assert.NotEmpty(await client.GetStringAsync("https://www.google.com/", retry: 5));
-			}
+			var html = await client.GetStringSafeAsync("http://www.whatismyip.cz/");
+			var doc = new HtmlDocument();
+			doc.LoadHtml(html);
+			var ipValue = doc.DocumentNode.QuerySelector("div.ip")?.InnerText;
+
+			Assert.Contains(_test.Options.Proxies, x => x.Ip == ipValue);
 		}
 
 		[Fact]
@@ -59,7 +66,7 @@ namespace FreeProxySharp.Test
 			Assert.Contains(proxies, x => x.IsHttps);
 
 			// check all proxies
-			var checkedProxies = await FreeProxyListNet.Check(proxies, codeFilter: new[] { "SE", "DE", "ES", "PL", "FR", "NL", "CZ", "US", "RU" }, required: 1, maxMiliseconds: 1200);
+			var checkedProxies = await FreeProxyListNet.Check(proxies, codeFilter: new[] { "SE", "DE", "ES", "PL", "FR", "NL", "CZ", "US", "RU" }, required: 1, maxMiliseconds: 1200, timeoutSeconds: 3);
 			Assert.NotEmpty(checkedProxies);
 			Assert.All(checkedProxies, x => Assert.True(x.ElapsedMiliseconds > 0));
 		}
@@ -67,8 +74,7 @@ namespace FreeProxySharp.Test
 		[Fact]
 		public void TestFreeProxyConfigAssign()
 		{
-			// all together
-			_test.Options.AssignToConfig(codeFilter: new[] { "SE", "DE", "ES", "GB", "RU" }, required: 2);
+			// check config for proxy list
 			Assert.NotEmpty(_test.Options.Proxies);
 		}
 	}

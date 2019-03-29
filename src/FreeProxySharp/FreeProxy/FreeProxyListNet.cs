@@ -71,7 +71,7 @@ namespace FreeProxySharp
 		/// check proxy list
 		/// </summary>
 		public static async Task<IEnumerable<FreeProxyServer>> Check(IEnumerable<FreeProxyServer> list,
-			bool nonTransparentOnly = true, string[] codeFilter = null, int required = 10, int maxMiliseconds = 1000, bool? https = true)
+			bool nonTransparentOnly = true, string[] codeFilter = null, int required = 10, int maxMiliseconds = 1000, bool? https = true, int timeoutSeconds = 5)
         {
 			if (list == null)
 				throw new ArgumentNullException(nameof(list));
@@ -106,75 +106,77 @@ namespace FreeProxySharp
 				var label = $"#{++num} {p.Ip}:{p.Port} {p.Note}";
 
 				// create client with proxy
-				var handler = new HttpClientHandler()
+				using (var handler = new HttpClientHandler() { Proxy = new WebProxy(p.Ip, p.Port), UseProxy = true, })
+				using (var client = new HttpClient(handler) { Timeout = new TimeSpan(0, 0, timeoutSeconds) })
 				{
-					Proxy = new WebProxy(p.Ip, p.Port),
-					UseProxy = true,
-				};
-				var client = new HttpClient(handler);
-
-				// check myself IP
-				var html = "";
-				try
-				{
-					var watch = Stopwatch.StartNew();
-
-					html = await client.GetStringAsync("http://www.whatismyip.cz/");
-					if (string.IsNullOrEmpty(html))
+					// check myself IP
+					var html = "";
+					try
 					{
-						Log.Debug($"{label} [empty #1 - whatismyip]");
+						var watch = Stopwatch.StartNew();
+
+						html = await client.GetStringSafeAsync("http://www.whatismyip.cz/");
+						if (string.IsNullOrEmpty(html))
+						{
+							Log.Debug($"{label} [empty #1 - whatismyip]");
+							continue;
+						}
+
+						// save elapsed miliseconds
+						watch.Stop();
+						p.ElapsedMiliseconds = watch.ElapsedMilliseconds;
+
+						if (string.IsNullOrEmpty(await client.GetStringSafeAsync("https://www.google.com/")))
+						{
+							Log.Debug($"{label} [empty #2 - google]");
+							continue;
+						}
+					}
+					catch (HttpRequestException)
+					{
+						Log.Debug($"{label} [exception]");
+						continue;
+					}
+					catch (TaskCanceledException)
+					{
+						Log.Debug($"{label} [task cancelled]");
+						continue;
+					}
+					catch (OperationCanceledException ex)
+					{
+						Log.Debug($"{label} [operation cancelled]");
 						continue;
 					}
 
-					// save elapsed miliseconds
-					watch.Stop();
-					p.ElapsedMiliseconds = watch.ElapsedMilliseconds;
-
-					if (string.IsNullOrEmpty(await client.GetStringAsync("https://www.google.com/")))
+					// check if proxy is not transparent (visible IP is the same as proxy IP)
+					if (nonTransparentOnly)
 					{
-						Log.Debug($"{label} [empty #2 - google]");
+						var doc = new HtmlDocument();
+						doc.LoadHtml(html);
+						var ipValue = doc.DocumentNode.QuerySelector("div.ip")?.InnerText;
+
+						// check myself IP with proxy settings
+						if (ipValue != p.Ip)
+						{
+							Log.Debug($"{label} [ip]");
+							continue;
+						}
+					}
+
+					// check latency
+					if (maxMiliseconds > 0 && p.ElapsedMiliseconds > maxMiliseconds)
+					{
+						Log.Debug($"{label} [slow in {p.ElapsedMiliseconds}ms]");
 						continue;
 					}
-				}
-				catch (HttpRequestException)
-				{
-					Log.Debug($"{label} [exception]");
-					continue;
-				}
-				catch (TaskCanceledException)
-				{
-					Log.Debug($"{label} [cancelled]");
-					continue;
-				}
 
-				// check if proxy is not transparent (visible IP is the same as proxy IP)
-				if (nonTransparentOnly)
-				{
-					var doc = new HtmlDocument();
-					doc.LoadHtml(html);
-					var ipValue = doc.DocumentNode.QuerySelector("div.ip")?.InnerText;
+					result.Add(p);
+					Log.Debug($"{label} [OK in {p.ElapsedMiliseconds}ms]");
 
-					// check myself IP with proxy settings
-					if (ipValue != p.Ip)
-					{
-						Log.Debug($"{label} [ip]");
-						continue;
-					}
+					// check if already has count of requied
+					if (required > 0 && result.Count >= required)
+						break;
 				}
-
-				// check latency
-				if (maxMiliseconds > 0 && p.ElapsedMiliseconds > maxMiliseconds)
-				{
-					Log.Debug($"{label} [slow in {p.ElapsedMiliseconds}ms]");
-					continue;
-				}
-
-				result.Add(p);
-				Log.Debug($"{label} [OK in {p.ElapsedMiliseconds}ms]");
-
-				// check if already has count of requied
-				if (required > 0 && result.Count >= required)
-					break;
 			}
 
 			return result.OrderBy(x => x.ElapsedMiliseconds);
@@ -183,15 +185,12 @@ namespace FreeProxySharp
 		/// <summary>
 		/// parse & check & assign to configuratuin proxies
 		/// </summary>
-		public static void AssignToConfig(this IHttpProxyConfiguration configuration,
+		public static void CheckAndAssignToConfig(this IHttpProxyConfiguration configuration,
 			bool nonTransparentOnly = true, string[] codeFilter = null, int required = 10, int maxMiliseconds = 1000, bool? https = true,
 			bool throwWhenLessThanRequired = false)
 		{
 			if (configuration == null)
 				throw new ArgumentNullException(nameof(configuration));
-
-			if (!configuration.ProxyEnabled)
-				return;
 
 			var proxies = Parse().GetAwaiter().GetResult();
 			var checkedProxies = Check(proxies, nonTransparentOnly, codeFilter, required, maxMiliseconds, https).GetAwaiter().GetResult();

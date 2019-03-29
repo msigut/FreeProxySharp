@@ -1,7 +1,7 @@
 namespace FreeProxySharp
 {
 	/// <summary>
-	/// proxy
+	/// HttpClient configuration
 	/// </summary>
 	public interface IHttpProxyConfiguration
 	{
@@ -9,12 +9,11 @@ namespace FreeProxySharp
         int Retry { get; }
         string UserAgent { get; }
         bool GzipEnabled { get; }
-        bool ProxyEnabled { get; }
 		IHttpProxyServer[] Proxies { get; set; }
     }
 
     /// <summary>
-    /// proxy server
+    /// HttpClient proxy configuration
     /// </summary>
     public interface IHttpProxyServer
     {

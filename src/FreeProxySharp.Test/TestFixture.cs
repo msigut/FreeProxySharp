@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -42,11 +43,18 @@ namespace FreeProxySharp.Test
 			var services = new ServiceCollection();
 			services.AddSingleton(s => Log.Logger);
 			services.AddSingleton<IHttpProxyConfiguration>(Options);
-			services.AddSingleton<HttpProxyClient>();
+			services.AddSingleton<HttpProxyFactory>();
 
-			// proxy
-			Options.AssignToConfig(required: 1, throwWhenLessThanRequired: true);
-			services.AddHttpProxyClient(Options);
+			// common IHttpClientFactory
+			services.AddHttpClient();
+
+			// parse & check proxies ; save it into configuration
+			Options.CheckAndAssignToConfig(required: 1, throwWhenLessThanRequired: true);
+
+			// HttpClient settings
+			services.AddHttpClient("COMMON", Options);
+			services.AddHttpClient("404TEST", Options, whenRetry: res => res.StatusCode == HttpStatusCode.NotFound);
+			services.AddHttpClientProxy("PROXY", Options);
 
 			Services = services.BuildServiceProvider();
 		}
