@@ -57,6 +57,7 @@ namespace FreeProxySharp.Test
 			services.AddHttpClient("5RETRY", retry: 5);
 			// common client, with configured for retry when 404 status found (example)
 			services.AddHttpClient("404TEST", Options, whenRetry: res => res.StatusCode == HttpStatusCode.NotFound);
+			// proxy client, with all proxies gets by CheckAndAssignToConfig
 			services.AddHttpClientProxy("PROXY", Options);
 
 			Services = services.BuildServiceProvider();

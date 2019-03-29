@@ -35,7 +35,7 @@ var client = factory.GetClientProxy("PROXY");
 var html = await client.GetStringSafeAsync("https://www.amazon.com/");
 ```
 
-For common work with `IHttpClientFactory` clients, configure it by **Dependency injection** init procedure (example at: [TestFixture.cs](/src/FreeProxySharp.Test/TestFixture.cs)).
+For common work with *IHttpClientFactory* clients, configure it by **Dependency injection** init procedure (example at: [TestFixture.cs](/src/FreeProxySharp.Test/TestFixture.cs)).
 
 ```c#
 // common client, with all settings from Configuration
@@ -64,7 +64,8 @@ public class TestOptions : IHttpProxyConfiguration
 
 For update from version 1.0.x -> 1.1.x:
 
-- ADD: in `CheckAndAssignToConfig` switch: `throwWhenLessThanRequired` for exc. when less than requied proxy found
+- ADD: `AddHttpClient` and `AddHttpClientProxy` parameter whenRetry for HttpClient retry settings
+- ADD: `CheckAndAssignToConfig` switch: `throwWhenLessThanRequired` for exc. when less than requied proxy found
 - ADD: `CheckAndAssignToConfig` parameter: `Timeout` for timeout for checking all proxies
 - DEL: `IHttpProxyConfiguration.ProxyEnabled` removed (use `AddHttpClient` of `AddHttpClientProxy` instead manually)
 - DEL: `HttpProxyClient` removed ; now use `HttpExtensions` (for common configuration and tasks) & `HttpProxyFactory` (for work with proxy)

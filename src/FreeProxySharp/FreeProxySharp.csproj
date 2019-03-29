@@ -12,7 +12,7 @@
     <PackageTags>HttpClient Free Proxy List Dependency Injection netstandard2.0</PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageIconUrl>https://raw.githubusercontent.com/msigut/FreeProxySharp/master/proxy-icon.png</PackageIconUrl>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

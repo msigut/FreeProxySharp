@@ -142,7 +142,7 @@ namespace FreeProxySharp
 						Log.Debug($"{label} [task cancelled]");
 						continue;
 					}
-					catch (OperationCanceledException ex)
+					catch (OperationCanceledException)
 					{
 						Log.Debug($"{label} [operation cancelled]");
 						continue;
