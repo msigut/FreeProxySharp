@@ -12,7 +12,6 @@ namespace FreeProxySharp.Test
         public int RetryFirstDelay => 1;
         public bool GzipEnabled => true;
         public string UserAgent => HttpExtensions.DEFAULT_AGENT;
-        public bool ProxyEnabled => true;
 
         public IHttpProxyServer[] Proxies { get; set; }
     }
