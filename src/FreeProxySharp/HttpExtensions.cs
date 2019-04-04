@@ -16,21 +16,21 @@ namespace FreeProxySharp
 	public static class HttpExtensions
     {
         /// <summary>
-        /// number of retry
-        /// </summary>
-        public const int DEFAULT_RETRY = 3;
-        /// <summary>
-        /// first retry delay in seconds
-        /// </summary>
-        public const int DEFAULT_RETRY_FIRST_DELAY = 5;
-        /// <summary>
-        /// gzip enabled?
-        /// </summary>
-        public const bool DEFAULT_GZIP = true;
-        /// <summary>
-        /// default Agent name
-        /// </summary>
-        public const string DEFAULT_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36";
+		/// number of retry
+		/// </summary>
+		public const int DEFAULT_RETRY = 3;
+		/// <summary>
+		/// first retry delay in seconds
+		/// </summary>
+		public const int DEFAULT_RETRY_FIRST_DELAY = 5;
+		/// <summary>
+		/// gzip enabled?
+		/// </summary>
+		public const bool DEFAULT_GZIP = true;
+		/// <summary>
+		/// default Agent name
+		/// </summary>
+		public const string DEFAULT_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36";
 
 		/// <summary>
 		/// HttpClient DI settings by name
@@ -149,7 +149,7 @@ namespace FreeProxySharp
 		{
 			try
 			{
-				using (var response = await client.GetAsync(url))
+				using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
 				{
 					response.EnsureSuccessStatusCode();
 
@@ -162,6 +162,7 @@ namespace FreeProxySharp
 					{
 						// specialni kodovani obsahu stranky
 						var enc = CodePagesEncodingProvider.Instance.GetEncoding((int)encodingPage);
+
 						using (var stream = await response.Content.ReadAsStreamAsync())
 						{
 							using (var read = new StreamReader(stream, enc))
@@ -174,7 +175,12 @@ namespace FreeProxySharp
 			}
 			catch (TaskCanceledException)
 			{
-				Log.Warning($"Retry failed, url: '{url}'");
+				Log.Warning($"Retry [task cancelled] failed, url: '{url}'");
+				return null;
+			}
+			catch (OperationCanceledException)
+			{
+				Log.Warning($"Retry [operation cancelled] failed, url: '{url}'");
 				return null;
 			}
 		}
