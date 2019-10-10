@@ -5,6 +5,7 @@ namespace FreeProxySharp
 	/// </summary>
 	public enum FreeProxyTypes
 	{
+		Unknown,
 		Anonymous,
 		Elite,
 		Transparent

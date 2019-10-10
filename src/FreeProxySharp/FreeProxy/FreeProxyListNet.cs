@@ -26,9 +26,24 @@ namespace FreeProxySharp
 		/// </summary>
 		public static async Task<IEnumerable<FreeProxyServer>> Parse()
         {
+			// parse port number
+			int ParsePort(string str)
+			{
+				if (string.IsNullOrEmpty(str))
+					return 0;
+
+				if (int.TryParse(str, out var result))
+					return result;
+				else
+					return 0;
+			}
+
 			// parse proxy type
 			FreeProxyTypes ParseType(string str)
 			{
+				if (string.IsNullOrEmpty(str))
+					return FreeProxyTypes.Unknown;
+
 				switch (str.ToLowerInvariant())
 				{
 					case "anonymous":
@@ -47,16 +62,18 @@ namespace FreeProxySharp
 				var doc = new HtmlDocument();
 				doc.LoadHtml(html);
 
-				var rows = doc.DocumentNode.QuerySelectorAll("table tbody tr")
-					.Select(p => new FreeProxyServer()
+				var rowsTemp = doc.DocumentNode.QuerySelectorAll("table tbody tr").ToArray();
+				var rows = rowsTemp.Select(p => new FreeProxyServer()
 					{
-						Ip = p.QuerySelector("td:nth-child(1)").InnerHtml,
-						Port = int.Parse(p.QuerySelector("td:nth-child(2)").InnerHtml),
-						Code = p.QuerySelector("td:nth-child(3)").InnerHtml,
-						Country = p.QuerySelector("td:nth-child(4)").InnerHtml,
-						Type = ParseType(p.QuerySelector("td:nth-child(5)").InnerHtml),
-						IsHttps = p.QuerySelector("td:nth-child(7)").InnerHtml != "no",
-					});
+						Ip = p.QuerySelector("td:nth-child(1)")?.InnerHtml,
+						Port = ParsePort(p.QuerySelector("td:nth-child(2)")?.InnerHtml),
+						Code = p.QuerySelector("td:nth-child(3)")?.InnerHtml,
+						Country = p.QuerySelector("td:nth-child(4)")?.InnerHtml,
+						Type = ParseType(p.QuerySelector("td:nth-child(5)")?.InnerHtml),
+						IsHttps = p.QuerySelector("td:nth-child(7)")?.InnerHtml != "no",
+					})
+					.Where(x => x.Port > 0 && x.Type != FreeProxyTypes.Unknown)
+					.ToArray();
 
 				foreach (var row in rows)
 				{
